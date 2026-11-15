@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 import '../domain/restaurant_table.dart';
 import '../domain/table_repository.dart';
 import 'table_card.dart';
 import 'table_cubit.dart';
+import 'table_visuals.dart';
 
 class TablesDart extends StatelessWidget {
   const TablesDart({super.key});
@@ -45,20 +45,19 @@ class _TablesView extends StatelessWidget {
         return;
 
       case TableStatus.terisi:
-        final rupiah = NumberFormat.currency(
-          locale: 'id_ID',
-          symbol: 'Rp ',
-          decimalDigits: 0,
-        );
-
         await showDialog<void>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: Text('Meja ${table.number}'),
+            title: Row(
+              children: [
+                Expanded(child: Text('Meja ${table.number}')),
+                TableStatusBadge(status: table.status),
+              ],
+            ),
             content: Text(
               'Area: ${table.area}\n'
               'Jumlah tamu: ${table.guests ?? 0}\n'
-              'Tagihan dummy: ${rupiah.format(table.runningTotal)}',
+              'Tagihan dummy: ${formatRupiah(table.runningTotal)}',
             ),
             actions: [
               TextButton(
