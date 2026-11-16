@@ -36,23 +36,71 @@ Widget _wrapWithAuth(AuthCubit cubit) {
 void main() {
   group('LoginPage', () {
     testWidgets(
-      'menampilkan dua akun demo tanpa password dan teks Backoffice',
+      'menampilkan layout putih tanpa Card, brand lockup, teks Backoffice, dan dua akun demo tanpa password',
       (tester) async {
         final cubit = AuthCubit(FakeAuthRepository(delay: Duration.zero));
         addTearDown(cubit.close);
 
         await tester.pumpWidget(_wrapWithAuth(cubit));
 
-        expect(find.text('Masuk ke Qaseer'), findsOneWidget);
-        expect(find.textContaining('kasir@qaseer.id'), findsOneWidget);
-        expect(find.textContaining('pelayan@qaseer.id'), findsOneWidget);
+        final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+        expect(scaffold.backgroundColor, Colors.white);
+        expect(find.byType(Card), findsNothing);
+
+        expect(find.text('Qaseer'), findsOneWidget);
+        expect(find.text('POS Restoran'), findsOneWidget);
+        expect(find.text('Selamat Datang!'), findsOneWidget);
         expect(
-          find.textContaining('Minta akun melalui pengelola Backoffice'),
+          find.text('Silakan masukkan email dan password untuk mengakses Qaseer'),
           findsOneWidget,
         );
+        expect(find.text('contoh: kasir@qaseer.id'), findsOneWidget);
+        expect(find.text('Masukkan password Anda'), findsOneWidget);
+        expect(
+          find.textContaining(
+            'Belum punya akun? Minta akun melalui pengelola Backoffice',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Akun demo: kasir@qaseer.id · pelayan@qaseer.id'),
+          findsOneWidget,
+        );
+
         expect(find.textContaining('qaseer123'), findsNothing);
+        expect(find.textContaining('Forgot Password'), findsNothing);
+        expect(find.textContaining('Lupa Password'), findsNothing);
+        expect(find.textContaining('Sign Up'), findsNothing);
       },
     );
+
+    testWidgets('tidak overflow pada layar sempit selebar 320px', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final cubit = AuthCubit(FakeAuthRepository(delay: Duration.zero));
+      addTearDown(cubit.close);
+
+      await tester.pumpWidget(_wrapWithAuth(cubit));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Selamat Datang!'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'Belum punya akun? Minta akun melalui pengelola Backoffice',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Akun demo: kasir@qaseer.id · pelayan@qaseer.id'),
+        findsOneWidget,
+      );
+    });
 
     testWidgets(
       'validasi email kosong, format salah, password kosong, dan kurang dari 6 karakter',
@@ -143,29 +191,44 @@ void main() {
       },
     );
 
-    testWidgets('menampilkan pesan error saat akun peran lain ditolak', (
-      tester,
-    ) async {
-      final cubit = AuthCubit(FakeAuthRepository(delay: Duration.zero));
-      addTearDown(cubit.close);
+    testWidgets(
+      'menampilkan pesan error saat akun peran lain ditolak dan bersih saat login ulang sukses',
+      (tester) async {
+        final cubit = AuthCubit(FakeAuthRepository(delay: Duration.zero));
+        addTearDown(cubit.close);
 
-      await tester.pumpWidget(_wrapWithAuth(cubit));
+        await tester.pumpWidget(_wrapWithAuth(cubit));
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'owner@qaseer.id',
-      );
-      await tester.enterText(find.byType(TextFormField).at(1), 'qaseer123');
-      await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
-      await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextFormField).at(0),
+          'owner@qaseer.id',
+        );
+        await tester.enterText(find.byType(TextFormField).at(1), 'qaseer123');
+        await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
+        await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Akun peran ini tidak memiliki akses. Hanya Pelayan dan Kasir yang dapat masuk.',
-        ),
-        findsOneWidget,
-      );
-      expect(cubit.state.isAuthenticated, isFalse);
-    });
+        const roleError =
+            'Akun peran ini tidak memiliki akses. Hanya Pelayan dan Kasir yang dapat masuk.';
+        expect(find.text(roleError), findsOneWidget);
+        expect(cubit.state.isAuthenticated, isFalse);
+
+        await tester.enterText(find.byType(TextFormField).at(1), '');
+        await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
+        await tester.pump();
+        expect(find.text(roleError), findsOneWidget);
+        expect(find.text('Password wajib diisi.'), findsOneWidget);
+
+        await tester.enterText(
+          find.byType(TextFormField).at(0),
+          'kasir@qaseer.id',
+        );
+        await tester.enterText(find.byType(TextFormField).at(1), 'qaseer123');
+        await tester.tap(find.widgetWithText(FilledButton, 'Masuk'));
+        await tester.pumpAndSettle();
+
+        expect(find.text(roleError), findsNothing);
+        expect(cubit.state.isAuthenticated, isTrue);
+      },
+    );
   });
 }
