@@ -362,7 +362,7 @@ class _BackofficeFooter extends StatelessWidget {
         const Text(
           'Akun demo: kasir@qaseer.id · pelayan@qaseer.id',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
         ),
       ],
     );

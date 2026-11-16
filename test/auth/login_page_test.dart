@@ -54,17 +54,32 @@ void main() {
           find.text('Silakan masukkan email dan password untuk mengakses Qaseer'),
           findsOneWidget,
         );
+        expect(find.text('Email *'), findsOneWidget);
+        expect(find.text('Password *'), findsOneWidget);
         expect(find.text('contoh: kasir@qaseer.id'), findsOneWidget);
         expect(find.text('Masukkan password Anda'), findsOneWidget);
+
+        final decorators = tester.widgetList<InputDecorator>(
+          find.byType(InputDecorator),
+        );
+        expect(decorators.length, 2);
+        for (final decorator in decorators) {
+          expect(decorator.decoration.prefixIcon, isNull);
+        }
+
         expect(
           find.textContaining(
             'Belum punya akun? Minta akun melalui pengelola Backoffice',
           ),
           findsOneWidget,
         );
+        final demoHintFinder = find.text(
+          'Akun demo: kasir@qaseer.id · pelayan@qaseer.id',
+        );
+        expect(demoHintFinder, findsOneWidget);
         expect(
-          find.text('Akun demo: kasir@qaseer.id · pelayan@qaseer.id'),
-          findsOneWidget,
+          tester.widget<Text>(demoHintFinder).style?.color,
+          const Color(0xFF6B7280),
         );
 
         expect(find.textContaining('qaseer123'), findsNothing);
