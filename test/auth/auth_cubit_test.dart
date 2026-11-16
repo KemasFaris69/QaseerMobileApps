@@ -9,6 +9,7 @@ import 'package:qasser_mobile/auth/presentation/auth_cubit.dart';
 class _ControlledAuthRepository implements AuthRepository {
   User? _currentUser;
   int loginCalls = 0;
+  int logoutCalls = 0;
   Future<User> Function(String email, String password)? onLogin;
   Future<void> Function()? onLogout;
 
@@ -25,6 +26,7 @@ class _ControlledAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    logoutCalls++;
     if (onLogout != null) {
       await onLogout!();
     }
@@ -154,6 +156,32 @@ void main() {
         expect(failingCubit.state.loading, isFalse);
         expect(failingCubit.state.isAuthenticated, isTrue);
         expect(failingCubit.state.error, 'Gagal keluar. Silakan coba lagi.');
+      },
+    );
+
+    test(
+      'mengabaikan panggilan logout kedua saat loading sedang berjalan',
+      () async {
+        final completer = Completer<void>();
+        final repo = _ControlledAuthRepository()
+          .._currentUser = const User(
+            id: 'u-kasir-1',
+            name: 'Kasir Qaseer',
+            email: 'kasir@qaseer.id',
+            role: UserRole.kasir,
+          )
+          ..onLogout = () => completer.future;
+        final cubit = AuthCubit(repo);
+        addTearDown(cubit.close);
+
+        final first = cubit.logout();
+        final second = cubit.logout();
+
+        expect(repo.logoutCalls, 1);
+
+        completer.complete();
+        await Future.wait([first, second]);
+        expect(cubit.state, const AuthState());
       },
     );
   });
