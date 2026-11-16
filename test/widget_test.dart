@@ -42,7 +42,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Masuk ke Qaseer'), findsOneWidget);
+      expect(find.text('Selamat Datang!'), findsOneWidget);
       expect(find.text('Denah Meja'), findsNothing);
 
       await tester.enterText(
@@ -54,13 +54,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Denah Meja'), findsOneWidget);
+      expect(
+        Theme.of(tester.element(find.text('Denah Meja'))).scaffoldBackgroundColor,
+        const Color(0xFFF3F4F6),
+      );
       expect(find.text('Pelayan'), findsOneWidget);
       expect(find.text('Pelayan Qaseer'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(TextButton, 'Keluar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Masuk ke Qaseer'), findsOneWidget);
+      expect(find.text('Selamat Datang!'), findsOneWidget);
       expect(find.textContaining('salah'), findsNothing);
       expect(find.textContaining('Gagal keluar'), findsNothing);
 
@@ -142,7 +146,7 @@ void main() {
       logoutCompleter.complete();
       await tester.pumpAndSettle();
 
-      expect(find.text('Masuk ke Qaseer'), findsOneWidget);
+      expect(find.text('Selamat Datang!'), findsOneWidget);
     },
   );
 }
